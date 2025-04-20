@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="demo.sport.zones.mapper.ICionInfoMapper">
+
+    <resultMap id="BaseResultMap" type="demo.sport.zones.domain.PlaceCionInfoPO">
+        <id property="sequenceId" column="SEQUENCE_ID" jdbcType="INTEGER"/>
+        <result property="cionCode" column="CION_CODE" jdbcType="VARCHAR"/>
+        <result property="cionName" column="CION_NAME" jdbcType="VARCHAR"/>
+        <result property="cionIcon" column="CION_ICON" jdbcType="VARCHAR"/>
+        <result property="cionDesc" column="CION_DESC" jdbcType="VARCHAR"/>
+        <result property="createTime" column="CREATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="UPDATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="delTime" column="DEL_TIME" jdbcType="TIMESTAMP"/>
+        <result property="delFlag" column="DEL_FLAG" jdbcType="BOOLEAN"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        SEQUENCE_ID
+        ,CION_CODE,CION_NAME,CION_ICON,
+        CION_DESC,CREATE_TIME,UPDATE_TIME,
+        DEL_TIME,DEL_FLAG
+    </sql>
+
+    <select id="queryCionList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_CION_INFO
+        WHERE
+        DEL_FLAG=0
+        ORDER BY
+        CREATE_TIME DESC
+    </select>
+
+</mapper>

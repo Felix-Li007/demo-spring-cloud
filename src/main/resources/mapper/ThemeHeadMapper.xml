@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="demo.sport.zones.mapper.IThemeHeadMapper">
+
+    <resultMap id="BaseResultMap" type="demo.sport.zones.domain.ThemeHeadInfoPO">
+        <id property="sequenceId" column="SEQUENCE_ID" jdbcType="INTEGER"/>
+        <result property="headNo" column="HEAD_NO" jdbcType="VARCHAR"/>
+        <result property="themeNo" column="THEME_NO" jdbcType="VARCHAR"/>
+        <result property="orderPos" column="ORDER_POS" jdbcType="INTEGER"/>
+        <result property="headImage" column="HEAD_IMAGE" jdbcType="VARCHAR"/>
+        <result property="nationCode" column="NATION_CODE" jdbcType="VARCHAR"/>
+        <result property="createTime" column="CREATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="UPDATE_TIME" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        SEQUENCE_ID
+        ,HEAD_NO,THEME_NO,
+        HEAD_IMAGE,NATION_CODE,CREATE_TIME,
+        UPDATE_TIME
+    </sql>
+
+
+    <select id="selectHeadList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_HEAD_INFO
+        WHERE
+        DEL_FLAG=0
+        <if test="themeNo!=null">
+            AND THEME_NO=#{themeNo}
+        </if>
+        <if test="sequenceId>0">
+            AND SEQUENCE_ID &lt;#{sequenceId}
+        </if>
+        ORDER BY
+        ORDER_POS ASC,
+        CREATE_TIME DESC
+    </select>
+
+    <select id="selectHeadDetail" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_HEAD_INFO
+        WHERE
+        DEL_FLAG=0
+        AND THEME_NO=#{themeNo}
+        AND HEAD_NO=#{headNo}
+        LIMIT 1
+    </select>
+    <select id="getList" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_place_head_info WHERE DEL_FLAG=0
+    </select>
+    <delete id="deleteNotInSequenceIds">
+        update T_PLACE_HEAD_INFO
+        set DEL_FLAG = 1,DEL_TIME = now()
+        <where>
+            <if test="sequenceIds != null and sequenceIds.size()>0">
+                and SEQUENCE_ID not in
+                <foreach collection="sequenceIds" item="item" open="(" close=")" separator=",">
+                    #{item,jdbcType=NUMERIC}
+                </foreach>
+            </if>
+            and DEL_FLAG = 0
+        </where>
+    </delete>
+    <insert id="insertBatch">
+        insert into t_place_head_info(SEQUENCE_ID,HEAD_NO,THEME_NO,
+        HEAD_IMAGE,NATION_CODE,CREATE_TIME,
+        UPDATE_TIME)
+        values
+        <foreach collection="themeHeadInfoPOCollection" item="item" separator=",">
+            (#{item.sequenceId,jdbcType=NUMERIC},#{item.headNo,jdbcType=VARCHAR},#{item.themeNo,jdbcType=VARCHAR},
+            #{item.headImage,jdbcType=VARCHAR},#{item.nationCode,jdbcType=VARCHAR},#{item.createTime,jdbcType=TIMESTAMP},
+            #{item.updateTime,jdbcType=TIMESTAMP})
+        </foreach>
+    </insert>
+    <update id="updateSelective">
+        update t_place_head_info
+        <set>
+            <if test="headNo != null">HEAD_NO=#{headNo,jdbcType=VARCHAR},</if>
+            <if test="themeNo != null">THEME_NO=#{themeNo,jdbcType=VARCHAR},</if>
+            <if test="headImage != null">HEAD_IMAGE=#{headImage,jdbcType=VARCHAR},</if>
+            <if test="nationCode != null">NATION_CODE=#{nationCode,jdbcType=VARCHAR},</if>
+            <if test="createTime != null">CREATE_TIME=#{createTime,jdbcType=TIMESTAMP},</if>
+            <if test="updateTime != null">UPDATE_TIME=#{updateTime,jdbcType=TIMESTAMP},</if>
+        </set>
+        where SEQUENCE_ID = #{sequenceId,jdbcType=NUMERIC}
+    </update>
+</mapper>

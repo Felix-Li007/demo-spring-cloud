@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="demo.sport.zones.mapper.ITeamExperMapper">
+
+    <resultMap id="BaseResultMap" type="demo.sport.zones.domain.TeamExperInfoPO">
+        <id property="sequenceId" column="SEQUENCE_ID" jdbcType="INTEGER"/>
+        <result property="teamNo" column="TEAM_NO" jdbcType="VARCHAR"/>
+        <result property="themeNo" column="THEME_NO" jdbcType="VARCHAR"/>
+        <result property="experPoint" column="EXPER_POINT" jdbcType="INTEGER"/>
+        <result property="createTime" column="CREATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="UPDATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="delFlag" column="DEL_FLAG" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        SEQUENCE_ID
+        ,TEAM_NO,THEME_NO,EXPER_POINT,CREATE_TIME,
+        UPDATE_TIME,DEL_FLAG
+    </sql>
+
+    <insert id="insertExperInfo" parameterType="demo.sport.zones.domain.TeamExperInfoPO">
+        INSERT INTO T_PLACE_TEAM_EXPER
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            TEAM_NO,
+            THEME_NO,
+            EXPER_POINT,
+            CREATE_TIME,
+            UPDATE_TIME
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{experInfo.teamNo},
+            #{experInfo.themeNo},
+            #{experInfo.experPoint},
+            #{experInfo.createTime},
+            #{experInfo.updateTime}
+        </trim>
+    </insert>
+
+
+    <select id="selectExperInfo" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_TEAM_EXPER
+        WHERE
+        DEL_FLAG=0
+        AND TEAM_NO=#{teamNo}
+        AND THEME_NO=#{themeNo}
+        LIMIT 1
+    </select>
+
+    <update id="updateExperInfo" parameterType="demo.sport.zones.domain.TeamExperInfoPO">
+        UPDATE T_PLACE_TEAM_EXPER
+        <set>
+            <if test="experPoint!=null">
+                EXPER_POINT=#{experPoint},
+            </if>
+            UPDATE_TIME = #{updateTime}
+        </set>
+        WHERE
+        SEQUENCE_ID= #{sequenceId}
+    </update>
+
+    <select id="selectExperList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_TEAM_EXPER
+        WHERE
+        DEL_FLAG=0
+        AND THEME_NO=#{themeNo}
+        ORDER BY
+        EXPER_POINT DESC, CREATE_TIME DESC
+    </select>
+</mapper>

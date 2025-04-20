@@ -1,0 +1,15 @@
+# nacos setting
+nacos:
+  username: { { NACOS.APP.USER } }
+  password: { { NACOS.APP.PASSWD } }
+  server-addr: { { NACOS.APP.ADDR } }:{{ NACOS.APP.PORT }}
+  config-namespace: { { NACOS.APP.NAMESPACE.CONFIG } }
+  discovery-namespace: { { NACOS.APP.NAMESPACE.DISCOVERY } }
+
+# hrms kafka log
+hrms:
+  log:
+    write2File: { { KAFKA.DOKLOG.HRMS.TOFILE } }
+    useKafka: { { KAFKA.DOKLOG.HRMS.TOKAFKA } }
+    topic: k8s_ito_elk_logs
+    servers: { { KAFKA.DOKLOG.ADDR } }

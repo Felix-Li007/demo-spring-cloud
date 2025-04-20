@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="demo.sport.zones.mapper.IZoneInfoMapper">
+
+    <resultMap id="BaseResultMap" type="demo.sport.zones.domain.ZonesZoneInfoPO">
+        <id property="sequenceId" column="SEQUENCE_ID" jdbcType="INTEGER"/>
+        <result property="zoneNo" column="ZONE_NO" jdbcType="VARCHAR"/>
+        <result property="zoneName" column="ZONE_NAME" jdbcType="VARCHAR"/>
+        <result property="zoneIcon" column="ZONE_ICON" jdbcType="VARCHAR"/>
+        <result property="zoneSize" column="ZONE_SIZE" jdbcType="INTEGER"/>
+        <result property="limitNum" column="LIMIT_NUM" jdbcType="INTEGER"/>
+        <result property="zoneDesc" column="ZONE_DESC" jdbcType="VARCHAR"/>
+        <result property="zoneState" column="ZONE_STATE" jdbcType="VARCHAR"/>
+        <result property="zoneStyle" column="ZONE_STYLE" jdbcType="VARCHAR"/>
+        <result property="linkHref" column="LINK_HREF" jdbcType="VARCHAR"/>
+        <result property="parentId" column="PARENT_ID" jdbcType="VARCHAR"/>
+        <result property="createTime" column="CREATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="UPDATE_TIME" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        SEQUENCE_ID
+        ,ZONE_NO,LIMIT_NUM,
+        ZONE_NAME,ZONE_ICON,
+        ZONE_SIZE,ZONE_DESC,ZONE_STATE,
+        ZONE_STYLE,PARENT_ID,LINK_HREF,
+        CREATE_TIME,UPDATE_TIME
+    </sql>
+
+    <select id="selectZoneList" resultMap="BaseResultMap">
+        SELECT DISTINCT
+        T1.SEQUENCE_ID,T1.ZONE_NO,T1.LIMIT_NUM,T1.ZONE_NAME,T1.ZONE_ICON,
+        T1.ZONE_SIZE,T1.ZONE_DESC,T1.ZONE_STATE,T1.ZONE_STYLE,T1.PARENT_ID,T1.LINK_HREF,
+        T1.CREATE_TIME,T1.UPDATE_TIME
+        FROM
+        T_PLACE_ZONE_INFO T1
+        LEFT JOIN T_PLACE_THEME_ZONE T2 ON T1.ZONE_NO = T2.ZONE_NO
+        WHERE
+        T1.DEL_FLAG=0
+        <if test="themeNo!=null">
+            AND T1.ZONE_NO IN (
+            SELECT DISTINCT ZONE_NO FROM T_PLACE_THEME_ZONE T2 WHERE T2.THEME_NO=#{themeNo} AND T2.DEL_FLAG=0
+            )
+        </if>
+        ORDER BY
+        T1.CREATE_TIME DESC
+    </select>
+
+    <select id="selectZoneDetail" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_ZONE_INFO
+        WHERE
+        DEL_FLAG=0
+        <if test="zoneNo!=null">
+            AND ZONE_NO=#{zoneNo}
+        </if>
+    </select>
+
+    <select id="selectChildZoneList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_ZONE_INFO
+        WHERE
+        DEL_FLAG=0
+        <if test="parentId!=null">
+            AND PARENT_ID=#{parentId}
+        </if>
+        ORDER BY
+        CREATE_TIME ASC
+    </select>
+
+    <insert id="insertSelective" parameterType="demo.sport.zones.domain.ZonesZoneInfoPO">
+        insert into T_PLACE_ZONE_INFO
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="zoneIcon != null">ZONE_ICON,</if>
+            <if test="zoneSize != null">ZONE_SIZE,</if>
+            <if test="parentId != null">PARENT_ID,</if>
+            <if test="zoneDesc != null">ZONE_DESC,</if>
+            <if test="zoneStyle != null">ZONE_STYLE,</if>
+            <if test="linkHref != null">LINK_HREF,</if>
+            <if test="limitNum != null">LIMIT_NUM,</if>
+            ZONE_STATE,
+            ZONE_NO,
+            ZONE_NAME,
+            DEL_FLAG,
+            CREATE_TIME,
+            UPDATE_TIME
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="zoneIcon != null">#{zoneIcon,jdbcType=VARCHAR},</if>
+            <if test="zoneSize != null">#{zoneSize,jdbcType=INTEGER},</if>
+            <if test="parentId != null">#{parentId},</if>
+            <if test="zoneDesc != null">#{zoneDesc,jdbcType=VARCHAR},</if>
+            <if test="zoneStyle != null">#{zoneStyle,jdbcType=VARCHAR},</if>
+            <if test="linkHref != null">#{linkHref,jdbcType=VARCHAR},</if>
+            <if test="limitNum != null">#{limitNum,jdbcType=INTEGER},</if>
+            #{zoneState,jdbcType=VARCHAR},
+            #{zoneNo,jdbcType=VARCHAR},
+            #{zoneName,jdbcType=VARCHAR},
+            0,
+            now(),
+            now()
+        </trim>
+    </insert>
+
+    <!-- 删除场馆-->
+    <update id="updateZoneDelFlag">
+        UPDATE T_PLACE_ZONE_INFO
+        SET DEL_FLAG    = 1,
+            UPDATE_TIME = now()
+        WHERE ZONE_NO = #{zoneNo}
+          and DEL_FLAG = 0
+    </update>
+
+    <select id="selectParentZoneList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_ZONE_INFO
+        WHERE
+        DEL_FLAG = 0 AND PARENT_ID is null
+        <if test="zoneNo!=null and zoneNo != ''">
+            AND ZONE_NO =#{zoneNo,jdbcType=VARCHAR}
+        </if>
+        <if test="zoneName!=null and zoneName != ''">
+            AND ZONE_NAME LIKE CONCAT('%',#{zoneName},'%')
+        </if>
+        <if test="startTime!=null and startTime != ''">
+            AND CREATE_TIME >= #{startTime,jdbcType=VARCHAR}
+        </if>
+        <if test="endTime!=null and endTime != ''">
+            AND CREATE_TIME &lt;= #{endTime,jdbcType=VARCHAR}
+        </if>
+        ORDER BY
+        CREATE_TIME ASC
+    </select>
+
+    <!-- &lt;!&ndash; 分页查询顶级场馆列表 &ndash;&gt;
+     <select id="selectParentZoneList" resultMap="BaseResultMap">
+         SELECT
+         tpzi.SEQUENCE_ID,
+         tpzi.ZONE_NO,
+         tpzi.LIMIT_NUM,
+         tpzi.THEME_NO,
+         tpzi.ZONE_NAME,
+         tpzi.ZONE_ICON,
+         tpzi.ZONE_SIZE,
+         tpzi.ZONE_DESC,
+         tpzi.ZONE_STATE,
+         tpzi.ZONE_STYLE,
+         tpzi.PARENT_ID,
+         tpzi.LINK_HREF,
+         tpzi.CREATE_TIME,
+         tpzi.UPDATE_TIME
+         FROM
+         T_PLACE_ZONE_INFO tpzi
+         LEFT JOIN T_PLACE_ZONE_DATE tpzd
+         ON tpzi.ZONE_NO = tpzd.ZONE_NO
+         WHERE
+         tpzi.DEL_FLAG = 0 AND tpzi.PARENT_ID is null
+         <if test="zoneNo!=null and zoneNo != ''">
+             AND tpzi.ZONE_NO =#{zoneNo,jdbcType=VARCHAR}
+         </if>
+         <if test="zoneName!=null and zoneName != ''">
+             AND tpzi.ZONE_NAME =#{zoneName,jdbcType=VARCHAR}
+         </if>
+         <if test="themeNo!=null and themeNo != ''">
+             AND tpzi.THEME_NO =#{themeNo,jdbcType=VARCHAR}
+         </if>
+         <if test="openTime!=null and openTime != ''">
+             AND tpzd.OPEN_TIME >= #{openTime,jdbcType=VARCHAR}
+         </if>
+         <if test="closeTime!=null and closeTime != ''">
+             AND tpzd.CLOSE_TIME &lt;= #{closeTime,jdbcType=VARCHAR}
+         </if>
+         GROUP BY(tpzi.ZONE_NO)
+         ORDER BY
+         CREATE_TIME DESC
+     </select>-->
+
+    <!-- 全量查询顶级场馆列表 -->
+    <select id="selectAllParentZoneList" resultMap="BaseResultMap">
+        SELECT DISTINCT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_ZONE_INFO
+        WHERE
+        DEL_FLAG=0 AND PARENT_ID is null
+        ORDER BY
+        CREATE_TIME DESC
+    </select>
+
+    <!-- 修改场馆状态-->
+    <update id="updateZoneState">
+        UPDATE T_PLACE_ZONE_INFO
+        SET ZONE_STATE  = #{zoneState,jdbcType=VARCHAR},
+            UPDATE_TIME = now()
+        WHERE ZONE_NO = #{zoneNo,jdbcType=VARCHAR}
+          and DEL_FLAG = 0
+    </update>
+
+    <!-- 修改场馆信息-->
+    <update id="updateZoneInfo" parameterType="demo.sport.zones.domain.ZonesZoneInfoPO">
+        UPDATE T_PLACE_ZONE_INFO
+        <set>
+            ZONE_ICON = #{zoneIcon,jdbcType=VARCHAR},
+            <if test="zoneSize != null">
+                ZONE_SIZE = #{zoneSize,jdbcType=INTEGER},
+            </if>
+            <if test="parentId != null">
+                PARENT_ID = #{parentId},
+            </if>
+            <if test="zoneDesc != null and zoneDesc != ''">
+                ZONE_DESC = #{zoneDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="zoneStyle != null and zoneStyle != ''">
+                ZONE_STYLE = #{zoneStyle,jdbcType=VARCHAR},
+            </if>
+            <if test="linkHref != null and linkHref != ''">
+                LINK_HREF = #{linkHref,jdbcType=VARCHAR},
+            </if>
+            <if test="limitNum != null">
+                LIMIT_NUM = #{limitNum,jdbcType=INTEGER},
+            </if>
+            ZONE_STATE = #{zoneState,jdbcType=VARCHAR},
+            ZONE_NAME = #{zoneName,jdbcType=VARCHAR},
+            UPDATE_TIME = now()
+        </set>
+        where ZONE_NO = #{zoneNo,jdbcType=INTEGER}
+    </update>
+
+    <select id="queryZoneList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_ZONE_INFO
+        WHERE
+        DEL_FLAG = 0
+        <if test="sequenceId>0">
+            AND SEQUENCE_ID &lt;#{sequenceId}
+        </if>
+        ORDER BY
+        CREATE_TIME DESC
+    </select>
+
+    <!-- 分页查询场馆信息-->
+    <select id="pageListZoneInfo" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_ZONE_INFO
+        WHERE CREATE_TIME &lt;= #{nowTime,jdbcType=TIMESTAMP}
+        AND DEL_FLAG = 0
+        ORDER BY
+        CREATE_TIME DESC
+    </select>
+
+    <!-- 批量更新场馆状态-->
+    <update id="batchUpdateZoneStatus">
+        update T_PLACE_ZONE_INFO
+        set ZONE_STATE = #{zoneStatus,jdbcType=VARCHAR}
+        where ZONE_STATE != #{zoneStatus,jdbcType=VARCHAR}
+        and ZONE_NO in
+        <foreach collection="updateList" item="item" open="(" close=")" separator=",">
+            #{item.zoneNo,jdbcType=VARCHAR}
+        </foreach>
+    </update>
+</mapper>

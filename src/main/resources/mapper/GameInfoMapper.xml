@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="demo.sport.zones.mapper.IGameInfoMapper">
+
+    <resultMap id="BaseResultMap" type="demo.sport.zones.domain.ThemeGameInfoPO">
+        <id property="sequenceId" column="SEQUENCE_ID" jdbcType="INTEGER"/>
+        <result property="playCode" column="PLAY_CODE" jdbcType="VARCHAR"/>
+        <result property="playName" column="PLAY_NAME" jdbcType="VARCHAR"/>
+        <result property="memoDesc" column="MEMO_DESC" jdbcType="VARCHAR"/>
+        <result property="gameName" column="GAME_NAME" jdbcType="VARCHAR"/>
+        <result property="playMode" column="PLAY_MODE" jdbcType="VARCHAR"/>
+        <result property="optionNum" column="OPTION_NUM" jdbcType="INTEGER"/>
+        <result property="gameLevel" column="GAME_LEVEL" jdbcType="INTEGER"/>
+        <result property="createTime" column="CREATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="UPDATE_TIME" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        SEQUENCE_ID
+        ,PLAY_CODE,PLAY_NAME,PLAY_MODE,
+        GAME_NAME,MEMO_DESC,OPTION_NUM,
+        GAME_LEVEL,CREATE_TIME,UPDATE_TIME
+    </sql>
+
+    <select id="selectGameList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_GAME_INFO
+        WHERE
+        DEL_FLAG=0
+        ORDER BY
+        CREATE_TIME DESC
+    </select>
+
+    <select id="selectGameInfoByPlayCode" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_GAME_INFO
+        WHERE
+        DEL_FLAG=0
+        <if test="playCode!=null">
+            AND PLAY_CODE=#{playCode}
+        </if>
+        ORDER BY
+        SEQUENCE_ID ASC
+    </select>
+</mapper>

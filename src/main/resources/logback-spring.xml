@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- spring.application.name要在bootstrap.yml中定义-->
+<configuration debug="false">
+    <conversionRule conversionWord="message" converterClass="com.hrms.core.log.SensitiveConverter"/>
+
+    <springProperty scope="context" name="springAppName" source="spring.application.name"/>
+    <springProperty scope="context" name="rootLevel" source="logging.level.root" default-value="info"/>
+    <springProperty scope="refresh" name="write2File" source="hrms.log.write2File"/>
+    <springProperty scope="refresh" name="useKafka" source="hrms.log.useKafka"/>
+    <springProperty scope="refresh" name="topic" source="hrms.log.topic"/>
+    <springProperty scope="refresh" name="servers" source="hrms.log.servers"/>
+    <property name="log.dir" value="/data/logs/${springAppName}"/>
+    <!--通过环境变量区分不同的日志输出路径-->
+    <springProfile name="local">
+        <property name="log.dir" value="./logs/${springAppName}"/>
+    </springProfile>
+    <conversionRule conversionWord="hostName"
+                    converterClass="com.hrms.frame.log.HostNameConverter"/>
+
+    <!-- console -->
+    <appender name="consoleAppender" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.out</target>
+        <encoder charset="UTF-8">
+            <pattern>%d [%thread] %-5p [%c] [%F:%L] [httpId=%X{x-lottery-http-id}] [traceId=%X{traceId}] - %message%n
+            </pattern>
+        </encoder>
+    </appender>
+    <appender name="asyncConsoleAppender" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>512</queueSize>
+        <includeCallerData>true</includeCallerData>
+        <appender-ref ref="consoleAppender"/>
+    </appender>
+    <!-- console end-->
+
+    <!-- infoAppender -->
+    <appender name="infoAppender"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.dir}/monitor_info.log</file>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${rootLevel}</level>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.dir}/logs/monitor_info-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxHistory>90</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>200MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+        <encoder charset="UTF-8" class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <pattern>
+                    <pattern>
+                        {
+                        "timestamp": "%date",
+                        "level": "%level",
+                        "content": "#tryJson{%message}",
+                        "httpId": "%X{x-lottery-http-id:-}",
+                        "traceId": "%X{traceId:-}",
+                        "parentId": "%X{parentId:-}",
+                        "spanId": "%X{spanId:-}",
+                        "timeTaken": "%X{timeTaken:-}",
+                        "serverName": "${springAppName:-}",
+                        "thread": "%thread",
+                        "class": "%class",
+                        "method": "%method",
+                        "line": "%line"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+    </appender>
+    <appender name="asyncInfoAppender" class="ch.qos.logback.classic.AsyncAppender">
+        <filter class="com.hrms.frame.log.FileFilter">
+            <write2File>${write2File}</write2File>
+        </filter>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>true</includeCallerData>
+        <queueSize>512</queueSize>
+        <appender-ref ref="infoAppender"/>
+    </appender>
+    <!-- infoAppender end -->
+
+    <!-- errorAppender -->
+    <appender name="errorAppender"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.dir}/monitor_error.log</file>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.dir}/logs/monitor_error-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxHistory>90</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>200MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+        <encoder charset="UTF-8" class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <pattern>
+                    <pattern>
+                        {
+                        "timestamp": "%date",
+                        "level": "%level",
+                        "content": "#tryJson{%message}",
+                        "httpId": "%X{x-lottery-http-id:-}",
+                        "traceId": "%X{traceId:-}",
+                        "parentId": "%X{parentId:-}",
+                        "spanId": "%X{spanId:-}",
+                        "timeTaken": "%X{timeTaken:-}",
+                        "stack_trace": "%exception{5}",
+                        "serverName": "${springAppName:-}",
+                        "thread": "%thread",
+                        "class": "%class",
+                        "method": "%method",
+                        "line": "%line"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+    </appender>
+    <appender name="asyncErrorAppender" class="ch.qos.logback.classic.AsyncAppender">
+        <filter class="com.hrms.frame.log.FileFilter">
+            <write2File>${write2File}</write2File>
+        </filter>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>true</includeCallerData>
+        <queueSize>512</queueSize>
+        <appender-ref ref="errorAppender"/>
+    </appender>
+    <!-- errorAppender end-->
+
+    <!-- serviceLoggerAppender -->
+    <appender name="apiLoggerAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.dir}/monitor_api.log</file>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.dir}/logs/monitor_api-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxHistory>90</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>200MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+        <encoder charset="UTF-8" class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <pattern>
+                    <pattern>
+                        {
+                        "timestamp": "%date",
+                        "level": "%level",
+                        "content": "#tryJson{%message}",
+                        "httpId": "%X{x-lottery-http-id:-}",
+                        "traceId": "%X{traceId:-}",
+                        "parentId": "%X{parentId:-}",
+                        "spanId": "%X{spanId:-}",
+                        "timeTaken": "%X{timeTaken:-}",
+                        "serverName": "${springAppName:-}",
+                        "thread": "%thread",
+                        "conClass": "%X{conClass:-}",
+                        "class": "%class",
+                        "method": "%method",
+                        "line": "%line"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+    </appender>
+    <appender name="asyncApiLoggerAppender" class="ch.qos.logback.classic.AsyncAppender">
+        <filter class="com.hrms.frame.log.FileFilter">
+            <write2File>${write2File}</write2File>
+        </filter>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>true</includeCallerData>
+        <queueSize>512</queueSize>
+        <appender-ref ref="apiLoggerAppender"/>
+    </appender>
+    <!-- serviceLoggerAppender end -->
+
+    <!-- fileLoggerAppender -->
+    <appender name="fileLoggerAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.dir}/monitor_file.log</file>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.dir}/logs/monitor_file-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxHistory>90</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>200MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+        <encoder charset="UTF-8" class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <pattern>
+                    <pattern>
+                        {
+                        "timestamp": "%date",
+                        "level": "%level",
+                        "content": "#tryJson{%message}",
+                        "httpId": "%X{x-lottery-http-id:-}",
+                        "traceId": "%X{traceId:-}",
+                        "parentId": "%X{parentId:-}",
+                        "spanId": "%X{spanId:-}",
+                        "userIp": "%X{userIp:-}",
+                        "timeTaken": "%X{timeTaken:-}",
+                        "serverName": "${springAppName:-}",
+                        "thread": "%thread",
+                        "class": "%class",
+                        "method": "%method",
+                        "line": "%line"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+    </appender>
+    <appender name="asyncFileLoggerAppender" class="ch.qos.logback.classic.AsyncAppender">
+        <filter class="com.hrms.frame.log.FileFilter">
+            <write2File>${write2File}</write2File>
+        </filter>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>true</includeCallerData>
+        <queueSize>512</queueSize>
+        <appender-ref ref="fileLoggerAppender"/>
+    </appender>
+    <!-- fileLoggerAppender end -->
+
+    <!-- kafkaInfoAppender -->
+    <appender name="kafkaInfoAppender" class="com.hrms.frame.log.KafkaAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${rootLevel}</level>
+        </filter>
+        <topic>${topic}</topic>
+        <producerConfig>bootstrap.servers=${servers}</producerConfig>
+        <encoder charset="UTF-8" class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <pattern>
+                    <pattern>
+                        {
+                        "timestamp": "%date",
+                        "level": "%level",
+                        "content": "#tryJson{%message}",
+                        "httpId": "%X{x-lottery-http-id:-}",
+                        "traceId": "%X{traceId:-}",
+                        "parentId": "%X{parentId:-}",
+                        "spanId": "%X{spanId:-}",
+                        "timeTaken": "%X{timeTaken:-}",
+                        "serverName": "${springAppName:-}",
+                        "thread": "%thread",
+                        "class": "%class",
+                        "method": "%method",
+                        "line": "%line",
+                        "hostName": "%hostName"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+        <!--        <appender-ref ref="asyncConsoleAppender"/>-->
+    </appender>
+    <appender name="asyncKafkaInfoAppender" class="ch.qos.logback.classic.AsyncAppender">
+        <filter class="com.hrms.frame.log.KafkaFilter">
+            <useKafka>${useKafka}</useKafka>
+        </filter>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>true</includeCallerData>
+        <queueSize>1024</queueSize>
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="kafkaInfoAppender"/>
+    </appender>
+    <!-- kafkaInfoAppender end -->
+
+    <!-- kafkaErrorAppender -->
+    <appender name="kafkaErrorAppender" class="com.hrms.frame.log.KafkaAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <topic>${topic}</topic>
+        <producerConfig>bootstrap.servers=${servers}</producerConfig>
+        <encoder charset="UTF-8" class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <pattern>
+                    <pattern>
+                        {
+                        "timestamp": "%date",
+                        "level": "%level",
+                        "content": "#tryJson{%message}",
+                        "httpId": "%X{x-lottery-http-id:-}",
+                        "traceId": "%X{traceId:-}",
+                        "parentId": "%X{parentId:-}",
+                        "spanId": "%X{spanId:-}",
+                        "timeTaken": "%X{timeTaken:-}",
+                        "stack_trace": "%exception{5}",
+                        "serverName": "${springAppName:-}",
+                        "thread": "%thread",
+                        "class": "%class",
+                        "method": "%method",
+                        "line": "%line",
+                        "hostName": "%hostName"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+        <!--        <appender-ref ref="asyncConsoleAppender"/>-->
+    </appender>
+    <appender name="asyncKafkaErrorAppender" class="ch.qos.logback.classic.AsyncAppender">
+        <filter class="com.hrms.frame.log.KafkaFilter">
+            <useKafka>${useKafka}</useKafka>
+        </filter>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>true</includeCallerData>
+        <queueSize>1024</queueSize>
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="kafkaErrorAppender"/>
+    </appender>
+    <!-- kafkaErrorAppender end -->
+
+    <!-- kafkaServiceAppender -->
+    <appender name="kafkaApiAppender" class="com.hrms.frame.log.KafkaAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <topic>${topic}</topic>
+        <producerConfig>bootstrap.servers=${servers}</producerConfig>
+        <encoder charset="UTF-8" class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <pattern>
+                    <pattern>
+                        {
+                        "timestamp": "%date",
+                        "level": "%level",
+                        "content": "#tryJson{%message}",
+                        "httpId": "%X{x-lottery-http-id:-}",
+                        "traceId": "%X{traceId:-}",
+                        "parentId": "%X{parentId:-}",
+                        "spanId": "%X{spanId:-}",
+                        "timeTaken": "%X{timeTaken:-}",
+                        "serverName": "${springAppName:-}",
+                        "thread": "%thread",
+                        "conClass": "%X{conClass:-}",
+                        "class": "%class",
+                        "method": "%method",
+                        "line": "%line",
+                        "hostName": "%hostName"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+        <!--        <appender-ref ref="asyncConsoleAppender"/>-->
+    </appender>
+    <appender name="asyncKafkaApiAppender" class="ch.qos.logback.classic.AsyncAppender">
+        <filter class="com.hrms.frame.log.KafkaFilter">
+            <useKafka>${useKafka}</useKafka>
+        </filter>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>true</includeCallerData>
+        <queueSize>1024</queueSize>
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="kafkaApiAppender"/>
+    </appender>
+    <!-- kafkaServiceAppender end -->
+
+    <!-- kafkaFileAppender -->
+    <appender name="kafkaFileAppender" class="com.hrms.frame.log.KafkaAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <topic>${topic}</topic>
+        <producerConfig>bootstrap.servers=${servers}</producerConfig>
+        <encoder charset="UTF-8" class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <pattern>
+                    <pattern>
+                        {
+                        "timestamp": "%date",
+                        "level": "%level",
+                        "content": "#tryJson{%message}",
+                        "httpId": "%X{x-lottery-http-id:-}",
+                        "traceId": "%X{traceId:-}",
+                        "parentId": "%X{parentId:-}",
+                        "spanId": "%X{spanId:-}",
+                        "userIp": "%X{userIp:-}",
+                        "timeTaken": "%X{timeTaken:-}",
+                        "serverName": "${springAppName:-}",
+                        "thread": "%thread",
+                        "class": "%class",
+                        "method": "%method",
+                        "line": "%line",
+                        "hostName": "%hostName"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+        <!--        <appender-ref ref="asyncConsoleAppender"/>-->
+    </appender>
+    <appender name="asyncKafkaFileAppender" class="ch.qos.logback.classic.AsyncAppender">
+        <filter class="com.hrms.frame.log.KafkaFilter">
+            <useKafka>${useKafka}</useKafka>
+        </filter>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>true</includeCallerData>
+        <queueSize>1024</queueSize>
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="kafkaFileAppender"/>
+    </appender>
+    <!-- kafkaFileAppender end -->
+    <logger name="org.apache" additivity="false">
+        <level value="ERROR"/>
+        <appender-ref ref="asyncErrorAppender"/>
+        <appender-ref ref="asyncInfoAppender"/>
+        <appender-ref ref="asyncKafkaErrorAppender"/>
+        <appender-ref ref="asyncKafkaInfoAppender"/>
+    </logger>
+    <logger name="org.springframework" additivity="true">
+        <level value="ERROR"/>
+        <appender-ref ref="asyncErrorAppender"/>
+        <appender-ref ref="asyncInfoAppender"/>
+        <appender-ref ref="asyncKafkaErrorAppender"/>
+        <appender-ref ref="asyncKafkaInfoAppender"/>
+    </logger>
+    <logger name="com.alibaba.nacos" additivity="false">
+        <level value="ERROR"/>
+        <appender-ref ref="asyncErrorAppender"/>
+        <appender-ref ref="asyncInfoAppender"/>
+        <appender-ref ref="asyncKafkaErrorAppender"/>
+        <appender-ref ref="asyncKafkaInfoAppender"/>
+    </logger>
+    <logger name="com.hrms" additivity="true">
+        <level value="${rootLevel}"/>
+        <appender-ref ref="asyncErrorAppender"/>
+        <appender-ref ref="asyncInfoAppender"/>
+        <appender-ref ref="asyncKafkaErrorAppender"/>
+        <appender-ref ref="asyncKafkaInfoAppender"/>
+    </logger>
+    <logger name="apiLogger" additivity="false">
+        <level value="${rootLevel}"/>
+        <appender-ref ref="asyncApiLoggerAppender"/>
+        <appender-ref ref="asyncErrorAppender"/>
+        <appender-ref ref="asyncKafkaApiAppender"/>
+        <appender-ref ref="asyncKafkaErrorAppender"/>
+    </logger>
+    <logger name="fileLogger" additivity="true">
+        <level value="INFO"/>
+        <appender-ref ref="asyncFileLoggerAppender"/>
+        <appender-ref ref="asyncErrorAppender"/>
+        <appender-ref ref="asyncKafkaFileAppender"/>
+        <appender-ref ref="asyncKafkaErrorAppender"/>
+    </logger>
+    <logger name="infoLogger" additivity="true">
+        <level value="${rootLevel}"/>
+        <appender-ref ref="asyncInfoAppender"/>
+        <appender-ref ref="asyncErrorAppender"/>
+        <appender-ref ref="asyncKafkaInfoAppender"/>
+        <appender-ref ref="asyncKafkaErrorAppender"/>
+    </logger>
+
+    <root>
+        <level value="${rootLevel}"/>
+        <appender-ref ref="asyncErrorAppender"/>
+        <appender-ref ref="asyncConsoleAppender"/>
+        <appender-ref ref="asyncKafkaErrorAppender"/>
+    </root>
+</configuration>

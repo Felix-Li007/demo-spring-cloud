@@ -1,0 +1,231 @@
+nacos:
+  username: nacos
+  password: 4qNDm^PVGL#u2YN3!bOC
+  server-addr: 10.73.64.28:8848
+  config-namespace: ad137797-1dbe-4657-9474-c5a442e8b6ec
+  discovery-namespace: ad137797-1dbe-4657-9474-c5a442e8b6ec
+
+spring:
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  # nacos 配置
+  cloud:
+    nacos:
+      config:
+        server-addr: ${nacos.server-addr}
+        file-extension: yaml
+        group: hrms-game-center
+        ##取特定命名空间
+        namespace: ${nacos.config-namespace}
+        # 扩展配置，引入多个配置文件，扩展配置必须与外部配置在同一个命名空间下
+        extension-configs:
+        # 用于开启或者关闭 nacos配置中心连接， 默认true开启，false关闭
+        enabled: true
+        username: ${nacos.username}
+        password: ${nacos.password}
+        config-long-poll-timeout: 30000
+      discovery:
+        server-addr: ${nacos.server-addr}
+        ## 相互之间存在交互的服务之间必须采用相同命名空间和所属组
+        # 指定归属命名空间
+        namespace: ${nacos.discovery-namespace}
+        # 指定归属组
+        group: hrms-group
+        username: ${nacos.username}
+        password: ${nacos.password}
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/hrms_game?useUnicode=true&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8&useSSL=false&connectTimeout=30000&socketTimeout=60000
+    username: dml
+    password: ZId8IFbrs+VGPwHDcjQyCTQI503ImQDOYipY5ZsAjv1gw/B2uLC4Fvaqs+inUDCJ+kpRgfOOe677DIBebI/cgw==
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initialSize: 5
+      minIdle: 10
+      maxActive: 50
+      maxWait: 60000
+      timeBetweenEvictionRunsMillis: 60000
+      minEvictableIdleTimeMillis: 300000
+      validationQuery: SELECT 'x'
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+      poolPreparedStatements: false
+      maxPoolPreparedStatementPerConnectionSize: 20
+      removeAbandoned: true
+      removeAbandonedTimeout: 1800
+      logAbandoned: true
+      filters: config,stat,wall
+      publickey: MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAK94fFz6Ipfq/x2Yf2YDO9aF5NbWMxUH6CcHxzM6Ovf7n8RfWah8ELplXAhe1hv7x40vX7G6dOthU9nc60QjYv0CAwEAAQ==
+      connectionProperties: config.decrypt=true;config.decrypt.key=${spring.datasource.druid.publickey};druid.stat.mergeSql=true;druid.stat.slowSqlMillis=10000
+  ## redis 配置
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password: eLaooM3R8G
+
+  ## kafka 配置
+  kafka:
+    # Kafka集群
+    bootstrap-servers: 127.1.0.1:9092
+    listener:
+      ack-mode: manual
+      type: batch
+      concurrency: 1
+    producer:
+      # 重试次数
+      retries: 2
+      # 应答级别:多少个分区副本备份完成时向生产者发送ack确认(可选0、1、all/-1)
+      acks: 1
+      properties:
+        linger:
+          # 当生产端积累的消息达到batch-size或接收到消息linger.ms后,生产者就会将消息提交给kafka
+          # linger.ms为0表示每接收到一条消息就提交给kafka,这时候batch-size其实就没用了
+          ms: 0
+      buffer-memory: 33554432
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      properties:
+        client:
+          id: ${spring.application.name}+${server.port}
+        group:
+          id: ${spring.application.name}
+        session:
+          timeout:
+            ms: 10000
+        request:
+          timeout:
+            ms: 10000
+      enable-auto-commit: false
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      max-poll-records: 50
+hrms:
+  log:
+    write2File: true
+
+  frame:
+    job:
+      # xxl job 配置
+      xxl-job:
+        # xxl-job管理端访问地址
+        admin-addresses: http://localhost:21003/manager/job/
+        # xxl-job管理端与客户端交互密钥
+        access-token: ztc
+        # 日志路径
+        log-path: /data/logs/${spring.application.name}/
+        # 日志保留天数
+        log-retention-days: 30
+        # 定时任务名称与管理端器appName保持一致
+        app-name: ${spring.application.name}-${spring.profiles.active}
+        # 应用端口 不配置指定默认21799
+        app-port: ${server.port}
+    sequence:
+      ds:
+        url: jdbc:mysql://127.0.0.1:3306/hrms_common?useUnicode=true&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8&useSSL=false&connectTimeout=30000&socketTimeout=60000
+        driver: com.mysql.cj.jdbc.Driver
+        username: dml
+        password: ZId8IFbrs+VGPwHDcjQyCTQI503ImQDOYipY5ZsAjv1gw/B2uLC4Fvaqs+inUDCJ+kpRgfOOe677DIBebI/cgw==
+        ## private-key:MIIBVQIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEAlxDZrDM4NwLn5BL+YydklIZVcNQq9cAO1p8MuN4//8mnKoK0/7ISa6yIRCmYO4CeSPcRoQv9SgxMWI4ci3t7PQIDAQABAkEAiwIUayLOrcBcxkC8GV2cbheW87Youe67OL8uo8bPuXzPlxTuYyQvW6Yvj7j+pbyJ5fsC9SOOEujNg4aFdFHBOQIhAPn1IU6a9LZD8J12LEsjQfgr9zCRjoYTx45VhSYGYiFvAiEAmre5yr7TM+VrmtZgEGv8QiQTi+v7i8gHuyY53rF9ABMCIQC+5OHqCVeot1xUtUKAo82m/dTLp+5kIUj/P/rvHmLlSwIgHw+FcCuRMRj82k/xZzqWoRynA+8zR+O3kZ3h/lA5nRsCIHrDw7KGQDJ8LNhWO+b4Fwx36fq7m3ALu8abFI6DRaEQ
+        public-key: MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAK94fFz6Ipfq/x2Yf2YDO9aF5NbWMxUH6CcHxzM6Ovf7n8RfWah8ELplXAhe1hv7x40vX7G6dOthU9nc60QjYv0CAwEAAQ==
+        initialSize: 5
+        minIdle: 10
+        maxActive: 50
+        maxWait: 60000
+        timeBetweenEvictionRunsMillis: 60000
+        minEvictableIdleTimeMillis: 300000
+        validationQuery: SELECT 'x'
+        testWhileIdle: true
+        testOnBorrow: true
+        testOnReturn: true
+        poolPreparedStatements: false
+        maxPoolPreparedStatementPerConnectionSize: 20
+        removeAbandoned: true
+        removeAbandonedTimeout: 1800
+        logAbandoned: true
+  ## redisson分布式锁配置
+  redis:
+    redisson:
+      idle-connection-timeout: 10000
+      connect-timeout: 10000
+      timeout: 30000
+      address: redis://127.0.0.1:6379
+      password: eLaooM3R8G
+      connection-pool-size: 500
+      connection-minimum-idle-size: 100
+
+logging:
+  level:
+    root: debug
+
+
+queue:
+  kafka:
+    order-topic: "hrms-order-pub-bet-calculation"
+    exper-topic: "hrms-sport-zones-exper"
+
+storage:
+  #对象存储cdn域名
+  #阿里域名
+  oss-cname: https://webossdev.test.sporttery.cn
+  #腾讯域名
+  #oss-cname: https://dev-las-1255333572.cos.ap-beijing.myqcloud.com
+  #腾讯存储桶
+  #game-bucket: dev-las-1255333572
+  #阿里存储桶
+  oss-bucket: webossdev
+  path-config:
+    #对象存储远程路径 阿里云不允许对象路径以‘/’ 开始
+    root-path: hrmsmgr/game
+    #游戏类别图片地址
+    head-path: /head
+    #用户面板信息背景图片地址
+    icons-path: /icons
+
+datacs:
+  rank-config:
+    - theme-no: "1"
+      # rankCode-rangCode-metriCode-rangValue
+      rank-code: "0001"
+      rang-code: "40"
+      metri-code: "0003"
+      rang-value: "0000001"
+      rank-topn: 1500
+      rank-dcmi: "sports-rank-queryRankDetail"
+    - theme-no: "1"
+      rank-code: "0002"
+      rang-code: "40"
+      metri-code: "0001"
+      rang-value: "0000001"
+      rank-dcmi: "sports-rank-queryRankDetail"
+      rank-topn: 3
+    - theme-no: "1"
+      rank-code: "0003"
+      rang-code: "40"
+      metri-code: "0001"
+      rang-value: "0000001"
+      rank-dcmi: "sports-rank-queryRankDetail"
+      rank-topn: 3
+    - theme-no: "1"
+      rank-code: "0004"
+      rang-code: "40"
+      metri-code: "0001"
+      rang-value: "0000001"
+      rank-dcmi: "sports-rank-queryRankDetail"
+      rank-topn: 3
+    - theme-no: "1"
+      rank-code: "0005"
+      rang-code: "40"
+      metri-code: "0001"
+      rang-value: "0000001"
+      rank-dcmi: "sports-rank-queryRankDetail"
+      rank-topn: 3
+  play-config:
+    - theme-no: "1"
+      play-code: "-1"
+      play-name: "YES Or NO"
+      play-dcmi: "sports-zones-readQueueMessage"
+

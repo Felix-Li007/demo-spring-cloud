@@ -1,0 +1,15 @@
+nacos:
+  username: nacos
+  password: nacos
+  #server-addr: 10.20.1.121:8848 10.20.1.135:8848
+  server-addr: 10.20.1.121:8848
+  config-namespace: ad137797-1dbe-4657-9474-c5a442e8b6ec
+  discovery-namespace: ad137797-1dbe-4657-9474-c5a442e8b6ec
+
+# hrms kafka log
+hrms:
+  log:
+    write2File: true
+    useKafka: true
+    topic: k8s_ito_elk_logs
+    servers: 10.20.1.118:9092

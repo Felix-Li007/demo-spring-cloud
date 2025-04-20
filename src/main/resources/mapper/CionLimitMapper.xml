@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="demo.sport.zones.mapper.ICionLimitMapper">
+
+    <resultMap id="BaseResultMap" type="demo.sport.zones.domain.CionLimitInfoPO">
+        <id property="sequenceId" column="SEQUENCE_ID" jdbcType="INTEGER"/>
+        <result property="themeNo" column="THEME_NO" jdbcType="VARCHAR"/>
+        <result property="cionCode" column="CION_CODE" jdbcType="VARCHAR"/>
+        <result property="limitValue" column="LIMIT_VALUE" jdbcType="INTEGER"/>
+        <result property="timeUnit" column="TIME_UNIT" jdbcType="VARCHAR"/>
+        <result property="valueMode" column="VALUE_MODE" jdbcType="VARCHAR"/>
+        <result property="createTime" column="CREATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="UPDATE_TIME" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        SEQUENCE_ID
+        ,THEME_NO,CION_CODE,
+        LIMIT_VALUE,TIME_UNIT,VALUE_MODE,
+        CREATE_TIME,UPDATE_TIME
+    </sql>
+
+    <select id="selectLimitList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_CION_LIMIT
+        WHERE
+        DEL_FLAG=0
+        <if test="cionCode!=null">
+            AND CION_CODE=#{cionCode}
+        </if>
+        ORDER BY
+        CREATE_TIME DESC
+    </select>
+
+
+    <update id="deleteByThemeNo">
+        UPDATE T_PLACE_CION_LIMIT
+        SET DEL_FLAG    = 1,
+            UPDATE_TIME = now()
+        WHERE THEME_NO = #{themeNo}
+          and DEL_FLAG = 0
+    </update>
+
+    <insert id="insertSelective" parameterType="demo.sport.zones.domain.CionLimitInfoPO">
+        insert into T_PLACE_CION_LIMIT
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="cionCode != null">CION_CODE,</if>
+            <if test="themeNo != null">THEME_NO,</if>
+            <if test="limitValue != null">LIMIT_VALUE,</if>
+            <if test="valueMode != null">VALUE_MODE,</if>
+            DEL_FLAG,
+            CREATE_TIME,
+            UPDATE_TIME
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="cionCode != null">#{cionCode,jdbcType=VARCHAR},</if>
+            <if test="themeNo != null">#{themeNo,jdbcType=VARCHAR},</if>
+            <if test="limitValue != null">#{limitValue,jdbcType=VARCHAR},</if>
+            <if test="valueMode != null">#{valueMode,jdbcType=VARCHAR},</if>
+            0,
+            now(),
+            now()
+        </trim>
+    </insert>
+</mapper>

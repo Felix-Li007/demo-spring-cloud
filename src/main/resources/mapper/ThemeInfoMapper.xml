@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="demo.sport.zones.mapper.IThemeInfoMapper">
+
+    <resultMap id="BaseResultMap" type="demo.sport.zones.domain.PlaceThemeInfoPO">
+        <id property="sequenceId" column="SEQUENCE_ID" jdbcType="INTEGER"/>
+        <result property="themeNo" column="THEME_NO" jdbcType="VARCHAR"/>
+        <result property="themeTitle" column="THEME_TITLE" jdbcType="VARCHAR"/>
+        <result property="themeDesc" column="THEME_DESC" jdbcType="VARCHAR"/>
+        <result property="openState" column="OPEN_STATE" jdbcType="VARCHAR"/>
+        <result property="openTime" column="OPEN_TIME" jdbcType="TIMESTAMP"/>
+        <result property="closeTime" column="CLOSE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="createTime" column="CREATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="UPDATE_TIME" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        SEQUENCE_ID
+        ,THEME_NO,THEME_TITLE,THEME_DESC,
+        OPEN_STATE,OPEN_TIME,CLOSE_TIME,
+        CREATE_TIME,UPDATE_TIME
+    </sql>
+
+    <update id="updateThemeInfo" parameterType="demo.sport.zones.domain.PlaceThemeInfoPO">
+        UPDATE T_PLACE_THEME_INFO
+        <set>
+            <if test="themeTitle != null and themeTitle != ''">
+                THEME_TITLE = #{themeTitle,jdbcType=VARCHAR},
+            </if>
+            <if test="themeDesc != null and themeDesc != ''">
+                THEME_DESC = #{themeDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="openState != null and openState != ''">
+                OPEN_STATE = #{openState,jdbcType=VARCHAR},
+            </if>
+            <if test="openTime != null">
+                OPEN_TIME = #{openTime},
+            </if>
+            <if test="closeTime != null">
+                CLOSE_TIME = #{closeTime},
+            </if>
+            UPDATE_TIME = now()
+        </set>
+        where THEME_NO = #{themeNo}
+    </update>
+
+    <select id="selectThemeInfo" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_THEME_INFO
+        WHERE
+        DEL_FLAG=0
+        AND THEME_NO=#{themeNo}
+        LIMIT 1
+    </select>
+
+    <select id="queryThemeList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_THEME_INFO
+        WHERE
+        DEL_FLAG=0
+        <if test="themeDesc!=null and themeDesc != ''">
+            AND THEME_DESC like concat(concat('%',#{themeDesc}),'%')
+        </if>
+        ORDER BY
+        CREATE_TIME DESC
+    </select>
+
+    <insert id="insertSelective" parameterType="demo.sport.zones.domain.PlaceThemeInfoPO">
+        insert into T_PLACE_THEME_INFO
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="themeNo != null">THEME_NO,</if>
+            <if test="themeTitle != null">THEME_TITLE,</if>
+            <if test="themeDesc != null">THEME_DESC,</if>
+            <if test="openState != null">OPEN_STATE,</if>
+            <if test="openTime != null">OPEN_TIME,</if>
+            <if test="closeTime != null">CLOSE_TIME,</if>
+            DEL_FLAG,
+            CREATE_TIME,
+            UPDATE_TIME
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="themeNo != null">#{themeNo,jdbcType=VARCHAR},</if>
+            <if test="themeTitle != null">#{themeTitle,jdbcType=INTEGER},</if>
+            <if test="themeDesc != null">#{themeDesc,jdbcType=INTEGER},</if>
+            <if test="openState != null">#{openState,jdbcType=VARCHAR},</if>
+            <if test="openTime != null">#{openTime},</if>
+            <if test="closeTime != null">#{closeTime},</if>
+            0,
+            now(),
+            now()
+        </trim>
+    </insert>
+
+    <!-- 关闭场馆-->
+    <update id="closePlaceTheme">
+        update T_PLACE_THEME_INFO
+        set OPEN_STATE = #{closeStatus,jdbcType=TIMESTAMP}
+        where CLOSE_TIME <![CDATA[ < ]]> #{now,jdbcType=TIMESTAMP}
+    </update>
+
+    <!-- 开放场馆 -->
+    <update id="openPlaceTheme">
+        update T_PLACE_THEME_INFO
+        set OPEN_STATE = #{openStatus,jdbcType=TIMESTAMP}
+        where OPEN_TIME <![CDATA[ < ]]> #{now,jdbcType=TIMESTAMP}
+    </update>
+</mapper>

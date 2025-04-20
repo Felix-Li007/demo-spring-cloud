@@ -1,0 +1,135 @@
+server:
+  port: 22704
+  domain-code: 22704
+  servlet:
+    context-path: /sport/zones/
+  # tomcat 配置
+  tomcat:
+    accept-count: 150
+    connection-timeout: 50000ms
+    threads:
+      min-spare: 60
+      max: 400
+    max-connections: 1000
+
+spring:
+  main:
+    allow-circular-references: true
+  application:
+    name: hrms-sport-zones
+  profiles:
+    active: local
+  sleuth:
+    baggage:
+      remote-fields: x-lottery-http-id
+      correlation-fields: x-lottery-http-id
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  cloud:
+    nacos:
+      config:
+        server-addr: ${nacos.server-addr}
+        file-extension: yaml
+        group: hrms-game-center
+        namespace: ${nacos.config-namespace}
+        extension-configs:
+          #加载Redis缓存配置
+          - data-id: hrms-cache-${spring.profiles.active}.yaml
+            group: hrms-common
+            refresh: true
+          - data-id: hrms-db-game-${spring.profiles.active}.yaml
+            group: hrms-common
+            refresh: true
+          #加载数据库序列配置
+          - data-id: hrms-db-sequence-${spring.profiles.active}.yaml
+            group: hrms-common
+            refresh: true
+          #加载Redis分布式锁配置
+          - data-id: hrms-redisson-${spring.profiles.active}.yaml
+            group: hrms-common
+            refresh: true
+            #加载日志格式化配置
+          - data-id: hrms-log-${spring.profiles.active}.yaml
+            group: hrms-common
+            refresh: true
+            #加载Kafka集群配置
+          - data-id: hrms-mq-${spring.profiles.active}.yaml
+            group: hrms-common
+            refresh: true
+          - data-id: hrms-job-${spring.profiles.active}.yaml
+            group: hrms-common
+            # 在默认配置中不支持动态刷新，true：支持动态刷新，false：不支持
+            refresh: true
+        enabled: true
+        username: ${nacos.username}
+        password: ${nacos.password}
+        config-long-poll-timeout: 30000
+      discovery:
+        server-addr: ${nacos.server-addr}
+        namespace: ${nacos.discovery-namespace}
+        group: hrms-group
+        username: ${nacos.username}
+        password: ${nacos.password}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+logging:
+  level:
+    root: debug
+
+mybatis-plus:
+  global-config:
+    banner: false
+  mapper-locations: classpath:mapper/*Mapper.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.log4j2.Log4j2Impl
+
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 10000
+        readTimeout: 30000
+  hystrix:
+    enabled: true
+hystrix:
+  command:
+    default:
+      execution:
+        timeout:
+          enabled: true
+        isolation:
+          thread:
+            timeoutInMilliseconds: 30000
+  threadpool:
+    default:
+      coreSize: 30
+      maximumSize: 200
+      allowMaximumSizeToDivergeFromCoreSize: true
+      maxQueueSize: 200
+      queueSizeRejectionThreshold: 200
+ribbon:
+  ReadTimeout: 30000
+  ConnectTimeout: 10000
+  MaxAutoRetries: 1
+  MaxTotalHttpConnections: 200
+  MaxConnectionsPerHost: 200
+
+
+service:
+  call:
+    gateway:
+      node: hrms-gateway-node
+    account:
+      team: hrms-account-team
+    review:
+      rank: psdn-review-rank

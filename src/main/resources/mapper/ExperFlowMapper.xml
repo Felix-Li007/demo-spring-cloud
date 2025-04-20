@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="demo.sport.zones.mapper.IExperFlowMapper">
+
+    <resultMap id="BaseResultMap" type="demo.sport.zones.domain.PlaceExperFlowPO">
+        <id property="sequenceId" column="SEQUENCE_ID" jdbcType="INTEGER"/>
+        <result property="zoneNo" column="ZONE_NO" jdbcType="VARCHAR"/>
+        <result property="gameCode" column="GAME_CODE" jdbcType="VARCHAR"/>
+        <result property="experNo" column="EXPER_NO" jdbcType="VARCHAR"/>
+        <result property="playCode" column="PLAY_CODE" jdbcType="VARCHAR"/>
+        <result property="accountNo" column="ACCOUNT_NO" jdbcType="VARCHAR"/>
+        <result property="experPoint" column="EXPER_POINT" jdbcType="INTEGER"/>
+        <result property="fetchTime" column="FETCH_TIME" jdbcType="TIMESTAMP"/>
+        <result property="createTime" column="CREATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="UPDATE_TIME" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        SEQUENCE_ID
+        ,ZONE_NO,PLAY_CODE,GAME_CODE, EXPER_NO,
+        ACCOUNT_NO,EXPER_POINT,FETCH_TIME,
+        CREATE_TIME,UPDATE_TIME
+    </sql>
+
+    <!-- 保存用户经验点数记录-->
+    <insert id="insertExperFlow" keyColumn="SEQUENCE_ID" keyProperty="sequenceId"
+            parameterType="demo.sport.zones.domain.PlaceExperFlowPO"
+            useGeneratedKeys="true">
+        INSERT INTO T_PLACE_EXPER_FLOW
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            EXPER_NO,
+            ZONE_NO,
+            ACCOUNT_NO,
+            GAME_CODE,
+            PLAY_CODE,
+            FETCH_TIME,
+            EXPER_POINT,
+            CREATE_TIME,
+            UPDATE_TIME
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{experFlow.experNo},
+            #{experFlow.zoneNo},
+            #{experFlow.accountNo},
+            #{experFlow.gameCode},
+            #{experFlow.playCode},
+            #{experFlow.fetchTime},
+            #{experFlow.experPoint},
+            #{experFlow.createTime},
+            #{experFlow.createTime}
+        </trim>
+    </insert>
+
+    <select id="selectExperFlow" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_EXPER_FLOW
+        WHERE
+        DEL_FLAG=0
+        <if test="accntNo!=null">
+            AND ACCOUNT_NO=#{accntNo}
+        </if>
+        <if test="experNos!=null">
+            AND EXPER_NO IN (
+            <foreach collection="experNos" item="experNo" separator=",">
+                #{experNo}
+            </foreach>
+            )
+        </if>
+        ORDER BY
+        CREATE_TIME DESC
+    </select>
+
+    <select id="selectByZoneNo" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_EXPER_FLOW
+        WHERE
+        DEL_FLAG=0
+        <if test="zoneNo!=null">
+            AND ZONE_NO=#{zoneNo}
+        </if>
+    </select>
+
+</mapper>

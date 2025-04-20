@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="demo.sport.zones.mapper.IPlayExperMapper">
+
+    <resultMap id="BaseResultMap" type="demo.sport.zones.domain.PlayExperInfoPO">
+        <id property="sequenceId" column="SEQUENCE_ID" jdbcType="INTEGER"/>
+        <result property="accountNo" column="ACCOUNT_NO" jdbcType="VARCHAR"/>
+        <result property="themeNo" column="THEME_NO" jdbcType="VARCHAR"/>
+        <result property="playMode" column="PLAY_MODE" jdbcType="VARCHAR"/>
+        <result property="experPoint" column="EXPER_POINT" jdbcType="INTEGER"/>
+        <result property="createTime" column="CREATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="UPDATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="delFlag" column="DEL_FLAG" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        SEQUENCE_ID
+        ,ACCOUNT_NO,THEME_NO,
+        PLAY_MODE,EXPER_POINT,CREATE_TIME,
+        UPDATE_TIME,DEL_FLAG
+    </sql>
+
+    <insert id="insertExperInfo" parameterType="demo.sport.zones.domain.PlayExperInfoPO">
+        INSERT INTO T_PLACE_PROFILE_EXPER
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            ACCOUNT_NO,
+            THEME_NO,
+            PLAY_MODE,
+            EXPER_POINT,
+            CREATE_TIME,
+            UPDATE_TIME
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{experInfo.accountNo},
+            #{experInfo.themeNo},
+            #{experInfo.playMode},
+            #{experInfo.experPoint},
+            #{experInfo.createTime},
+            #{experInfo.updateTime}
+        </trim>
+    </insert>
+
+
+    <select id="selectExperInfo" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_PROFILE_EXPER
+        WHERE
+        DEL_FLAG=0
+        AND PLAY_MODE=#{playMode}
+        AND ACCOUNT_NO=#{accntNo}
+        AND THEME_NO=#{themeNo}
+        LIMIT 1
+    </select>
+
+    <update id="updateExperInfo">
+        UPDATE T_PLACE_PROFILE_EXPER
+        <set>
+
+            EXPER_POINT=EXPER_POINT+#{experPoint},
+
+            UPDATE_TIME = #{updateTime}
+        </set>
+        WHERE
+        SEQUENCE_ID= #{sequenceId}
+    </update>
+</mapper>

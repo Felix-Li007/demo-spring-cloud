@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="demo.sport.zones.mapper.IThemeMembMapper">
+
+    <resultMap id="BaseResultMap" type="demo.sport.zones.domain.ZonesThemeMembPO">
+        <id property="sequenceId" column="SEQUENCE_ID" jdbcType="INTEGER"/>
+        <result property="themeNo" column="THEME_NO" jdbcType="VARCHAR"/>
+        <result property="compoNo" column="COMPO_NO" jdbcType="VARCHAR"/>
+        <result property="createTime" column="CREATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="UPDATE_TIME" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        SEQUENCE_ID
+        ,THEME_NO,COMPO_NO,
+        CREATE_TIME,UPDATE_TIME
+    </sql>
+
+    <select id="selectMembList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_THEME_MEMB
+        WHERE
+        DEL_FLAG=0
+        <if test="themeNo!=null">
+            AND THEME_NO=#{themeNo}
+        </if>
+        ORDER BY
+        CREATE_TIME DESC
+    </select>
+
+
+</mapper>

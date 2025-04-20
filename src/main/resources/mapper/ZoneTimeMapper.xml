@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="demo.sport.zones.mapper.IZoneTimeMapper">
+
+    <resultMap id="BaseResultMap" type="demo.sport.zones.domain.ZonesZoneTimePO">
+        <id property="sequenceId" column="SEQUENCE_ID" jdbcType="INTEGER"/>
+        <result property="dateNo" column="DATE_NO" jdbcType="VARCHAR"/>
+        <result property="weekCode" column="WEEK_CODE" jdbcType="VARCHAR"/>
+        <result property="startTime" column="START_TIME" jdbcType="VARCHAR"/>
+        <result property="closeTime" column="CLOSE_TIME" jdbcType="VARCHAR"/>
+        <result property="createTime" column="CREATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="UPDATE_TIME" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        SEQUENCE_ID
+        ,DATE_NO,WEEK_CODE,
+        START_TIME,CLOSE_TIME,CREATE_TIME,
+        UPDATE_TIME
+    </sql>
+
+    <select id="selectAllTimePOList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_ZONE_TIME
+        WHERE
+        DEL_FLAG=0
+        <if test="dateNo!=null">
+            AND DATE_NO=#{dateNo}
+        </if>
+        ORDER BY
+        CREATE_TIME DESC
+    </select>
+
+    <insert id="insertSelective" parameterType="demo.sport.zones.domain.ZonesZoneTimePO">
+        insert into T_PLACE_ZONE_TIME
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="dateNo != null and dateNo != ''">
+                DATE_NO,
+            </if>
+            <if test="startTime != null">
+                START_TIME,
+            </if>
+            <if test="closeTime != null">
+                CLOSE_TIME,
+            </if>
+            <if test="weekCode != null and weekCode != ''">
+                WEEK_CODE,
+            </if>
+            create_time,
+            update_time,
+            del_flag
+        </trim>
+        values
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="dateNo != null and dateNo != ''">
+                #{dateNo,jdbcType=VARCHAR},
+            </if>
+            <if test="startTime != null">
+                #{startTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="closeTime != null">
+                #{closeTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="weekCode != null and weekCode != ''">
+                #{weekCode,jdbcType=VARCHAR},
+            </if>
+            now(),
+            now(),
+            0
+        </trim>
+    </insert>
+</mapper>

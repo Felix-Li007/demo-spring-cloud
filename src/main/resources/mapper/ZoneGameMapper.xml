@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="demo.sport.zones.mapper.IZoneGameMapper">
+
+    <resultMap id="BaseResultMap" type="demo.sport.zones.domain.PlaceZoneGamePO">
+        <id property="sequenceId" column="SEQUENCE_ID" jdbcType="INTEGER"/>
+        <result property="themeNo" column="THEME_NO" jdbcType="VARCHAR"/>
+        <result property="zoneNo" column="ZONE_NO" jdbcType="VARCHAR"/>
+        <result property="playCode" column="PLAY_CODE" jdbcType="VARCHAR"/>
+        <result property="experPoint" column="EXPER_POINT" jdbcType="INTEGER"/>
+        <result property="createTime" column="CREATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="UPDATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="delTime" column="DEL_TIME" jdbcType="TIMESTAMP"/>
+        <result property="delFlag" column="DEL_FLAG" jdbcType="BOOLEAN"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        SEQUENCE_ID
+        ,THEME_NO,ZONE_NO,
+        PLAY_CODE,EXPER_POINT,CREATE_TIME,
+        UPDATE_TIME,DEL_TIME,DEL_FLAG
+    </sql>
+
+    <update id="deleteByThemeNo">
+        UPDATE T_PLACE_ZONE_GAME
+        SET DEL_FLAG    = 1,
+            UPDATE_TIME = now()
+        WHERE THEME_NO = #{themeNo}
+          and DEL_FLAG = 0
+    </update>
+
+    <insert id="insertSelective" parameterType="demo.sport.zones.domain.PlaceExperFlowPO">
+        insert into T_PLACE_ZONE_GAME
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="zoneNo != null">ZONE_NO,</if>
+            <if test="playCode != null">PLAY_CODE,</if>
+            <if test="experPoint != null">EXPER_POINT,</if>
+            <if test="themeNo != null">THEME_NO,</if>
+            DEL_FLAG,
+            CREATE_TIME,
+            UPDATE_TIME
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="zoneNo != null">#{zoneNo,jdbcType=VARCHAR},</if>
+            <if test="playCode != null">#{playCode,jdbcType=VARCHAR},</if>
+            <if test="experPoint != null">#{experPoint,jdbcType=INTEGER},</if>
+            <if test="themeNo != null">#{themeNo,jdbcType=VARCHAR},</if>
+            0,
+            now(),
+            now()
+        </trim>
+    </insert>
+
+    <select id="selectByThemeNo" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_ZONE_GAME
+        WHERE
+        DEL_FLAG=0
+        <if test="themeNo!=null">
+            AND THEME_NO = #{themeNo}
+        </if>
+        ORDER BY
+        SEQUENCE_ID ASC
+    </select>
+</mapper>

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="demo.sport.zones.mapper.IPFileInfoMapper">
+
+    <resultMap id="BaseResultMap" type="demo.sport.zones.domain.ZonesPfileInfoPO">
+        <id property="sequenceId" column="SEQUENCE_ID" jdbcType="INTEGER"/>
+        <result property="pfileNo" column="PFILE_NO" jdbcType="VARCHAR"/>
+        <result property="accountNo" column="ACCOUNT_NO" jdbcType="VARCHAR"/>
+        <result property="teamNo" column="TEAM_NO" jdbcType="VARCHAR"/>
+        <result property="headNo" column="HEAD_NO" jdbcType="VARCHAR"/>
+        <result property="experPoint" column="EXPER_POINT" jdbcType="INTEGER"/>
+        <result property="nickName" column="NICK_NAME" jdbcType="VARCHAR"/>
+        <result property="proteState" column="PROTE_STATE" jdbcType="VARCHAR"/>
+        <result property="headImage" column="HEAD_IMAGE" jdbcType="VARCHAR"/>
+        <result property="createTime" column="CREATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="UPDATE_TIME" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        SEQUENCE_ID
+        ,PFILE_NO,ACCOUNT_NO,HEAD_NO,TEAM_NO,
+        EXPER_POINT,NICK_NAME,HEAD_IMAGE,
+        PROTE_STATE,
+        CREATE_TIME,UPDATE_TIME
+    </sql>
+
+
+    <select id="paingPFileList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_PROFILE_INFO
+        WHERE
+        DEL_FLAG=0
+        <if test="sequenceId>0">
+            AND SEQUENCE_ID &lt;#{sequenceId}
+        </if>
+        <if test="teamNo!=null">
+            AND TEAM_NO=#{teamNo}
+        </if>
+        ORDER BY EXPER_POINT DESC
+    </select>
+
+    <select id="selectPFileList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_PROFILE_INFO
+        WHERE
+        DEL_FLAG=0
+        <if test="accntNos!=null">
+            AND ACCOUNT_NO IN (
+            <foreach collection="accntNos" item="accntNo" separator=",">
+                #{accntNo}
+            </foreach>
+            )
+        </if>
+    </select>
+
+    <insert id="insertPfileDetail" parameterType="demo.sport.zones.domain.ZonesPfileInfoPO">
+        insert into T_PLACE_PROFILE_INFO
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="pfileNo != null">PFILE_NO,</if>
+            <if test="accountNo != null">ACCOUNT_NO,</if>
+            <if test="proteState != null">PROTE_STATE,</if>
+            EXPER_POINT,
+            DEL_FLAG,
+            CREATE_TIME,
+            UPDATE_TIME
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="pfileNo != null">#{pfileNo},</if>
+            <if test="accountNo != null">#{accountNo,jdbcType=VARCHAR},</if>
+            <if test="proteState != null">#{proteState,jdbcType=VARCHAR},</if>
+            0,
+            0,
+            now(),
+            now()
+        </trim>
+    </insert>
+
+    <update id="updateExperPoint">
+        UPDATE
+        T_PLACE_PROFILE_INFO
+        <set>
+            EXPER_POINT=EXPER_POINT+#{experPoint},
+            UPDATE_TIME = #{updateTime}
+        </set>
+        WHERE
+        PFILE_NO= #{pFileNo}
+    </update>
+
+    <update id="updatePfileDetail" parameterType="demo.sport.zones.domain.ZonesPfileInfoPO">
+        UPDATE T_PLACE_PROFILE_INFO
+        <set>
+            <if test="headImage != null">
+                HEAD_IMAGE = #{headImage},
+            </if>
+            <if test="headType != null">
+                HEAD_TYPE = #{headType},
+            </if>
+            <if test="headMode != null">
+                HEAD_MODE = #{headMode},
+            </if>
+            <if test="headNo!=null">
+                HEAD_NO=#{headNo},
+            </if>
+            <if test="teamNo!=null">
+                TEAM_NO=#{teamNo},
+            </if>
+            UPDATE_TIME = #{updateTime}
+        </set>
+        WHERE
+        PFILE_NO= #{pfileNo}
+    </update>
+</mapper>

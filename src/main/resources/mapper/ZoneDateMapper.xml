@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="demo.sport.zones.mapper.IZoneDateMapper">
+
+    <resultMap id="BaseResultMap" type="demo.sport.zones.domain.ZonesZoneDatePO">
+        <id property="sequenceId" column="SEQUENCE_ID" jdbcType="INTEGER"/>
+        <result property="dateNo" column="DATE_NO" jdbcType="VARCHAR"/>
+        <result property="openTime" column="OPEN_TIME" jdbcType="TIMESTAMP"/>
+        <result property="closeTime" column="CLOSE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="createTime" column="CREATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="UPDATE_TIME" jdbcType="TIMESTAMP"/>
+        <result property="zoneNo" column="ZONE_NO" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        SEQUENCE_ID
+        ,DATE_NO,OPEN_TIME,
+        CLOSE_TIME,CREATE_TIME,UPDATE_TIME,
+        ZONE_NO
+    </sql>
+
+    <select id="selectZoneDatePOS" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        T_PLACE_ZONE_DATE
+        WHERE
+        DEL_FLAG=0
+        <if test="zoneNo!=null">
+            AND ZONE_NO=#{zoneNo}
+        </if>
+        ORDER BY
+        CREATE_TIME DESC
+    </select>
+
+    <insert id="insertSelective" parameterType="demo.sport.zones.domain.ZonesZoneDatePO">
+        insert into T_PLACE_ZONE_DATE
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="dateNo != null and dateNo != ''">
+                DATE_NO,
+            </if>
+            <if test="openTime != null">
+                OPEN_TIME,
+            </if>
+            <if test="closeTime != null">
+                CLOSE_TIME,
+            </if>
+            <if test="zoneNo != null and zoneNo != ''">
+                ZONE_NO,
+            </if>
+            create_time,
+            update_time,
+            del_flag
+        </trim>
+        values
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="dateNo != null and dateNo != ''">
+                #{dateNo,jdbcType=VARCHAR},
+            </if>
+            <if test="openTime != null">
+                #{openTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="closeTime != null">
+                #{closeTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="zoneNo != null and zoneNo != ''">
+                #{zoneNo,jdbcType=VARCHAR},
+            </if>
+            now(),
+            now(),
+            0
+        </trim>
+    </insert>
+
+    <update id="deleteDateByZoneNo">
+        UPDATE T_PLACE_ZONE_DATE
+        SET DEL_FLAG    = 1,
+            UPDATE_TIME = now()
+        WHERE ZONE_NO = #{zoneNo,jdbcType=VARCHAR}
+          and DEL_FLAG = 0
+    </update>
+</mapper>
